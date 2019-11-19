@@ -75,7 +75,7 @@ def pg(env, env_maker, policy, baseline, n_envs=mp.cpu_count(), last_iter=-1, n_
                 """
                 surr_loss = Variable(np.array(0.))
                 "*** YOUR CODE HERE ***"
-                return surr_loss
+                return -F.mean(dists.logli(all_acts) * all_advs)
 
             test_once(compute_surr_loss)
 

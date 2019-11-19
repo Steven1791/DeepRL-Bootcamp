@@ -1,0 +1,2 @@
+[2019-11-19 16:11:56.904314 UTC] Starting env pool
+[2019-11-19 16:12:01.444789 UTC] Starting epoch 0

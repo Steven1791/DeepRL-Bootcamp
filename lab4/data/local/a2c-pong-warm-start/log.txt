@@ -1,0 +1,20 @@
+[2019-11-19 16:10:59.320136 UTC] Starting env pool
+[2019-11-19 16:11:03.158831 UTC] Starting epoch 841
+------------------------------------
+| Epoch                | 841       |
+| TotalNEpisodes       | 0         |
+| TotalNSamples        | 0         |
+| Entropy              | 1.4534    |
+| Perplexity           | 4.2777    |
+| AveragePolicyProb[0] | 0.14644   |
+| AveragePolicyProb[1] | 0.1567    |
+| AveragePolicyProb[2] | 0.29741   |
+| AveragePolicyProb[3] | 0.10278   |
+| AveragePolicyProb[4] | 0.29515   |
+| AveragePolicyProb[5] | 0.0015187 |
+| |VfPred|             | 2.865     |
+| |VfTarget|           | 2.8441    |
+| VfLoss               | 0.041828  |
+------------------------------------
+[2019-11-19 16:11:44.828383 UTC] Saving snapshot
+[2019-11-19 16:11:44.829000 UTC] Starting epoch 842
