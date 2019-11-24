@@ -2,15 +2,10 @@
 
 """
 This project was developed by Rocky Duan, Peter Chen, Pieter Abbeel for the Berkeley Deep RL Bootcamp, August 2017. Bootcamp website with slides and lecture videos: https://sites.google.com/view/deep-rl-bootcamp/.
-
 Copyright 2017 Deep RL Bootcamp Organizers.
-
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 """
 
 
@@ -48,6 +43,11 @@ def point_get_grad_logp_action(theta, ob, action):
     """
     grad = np.zeros_like(theta)
     "*** YOUR CODE HERE ***"
+    
+    ob_1 = include_bias(ob)#we don't need a separate bias term - so we include it 
+    mean = theta.dot(ob_1)
+    zs = action - mean
+    grad = np.outer(zs, ob_1)
     return grad
 
 
@@ -114,6 +114,16 @@ def cartpole_get_grad_logp_action(theta, ob, action):
     """
     grad = np.zeros_like(theta)
     "*** YOUR CODE HERE ***"
+    
+    action_vector = np.zeros(theta.shape[0])#one hot vector with all entries zero except the a'th
+    action_vector[action] = 1# in the a'th the entry is one
+    
+    probability = softmax(compute_logits(theta, ob))#probability of an action is given with the softmax function
+    
+    #calculate gradient as shown above in point_get_grad_logp_action with probability
+    ob_1 = include_bias(ob)
+    
+    grad = np.outer(action_vector - probability, ob_1)
     return grad
 
 
@@ -248,6 +258,14 @@ def main(env_id, batch_size, discount, learning_rate, n_itrs, render, use_baseli
                     R_t = 0.
                     pg_theta = np.zeros_like(theta)
                     "*** YOUR CODE HERE ***"
+                    
+                    "Rt satis
+es the recurrence relation: R_t = discount * R_tplus1 + r_t"
+                    R_t = discount * R_tplus1 + r_t
+                    
+                    "single contribution to the overall policy gradient,... Formula shown in 3.4 Accummulating Policy Gradient"
+                    pg_theta = get_grad_logp_action(theta, s_t, a_t) * (R_t - b_t)
+  
                     return R_t, pg_theta
 
                 # Test the implementation, but only once
@@ -279,6 +297,9 @@ def main(env_id, batch_size, discount, learning_rate, n_itrs, render, use_baseli
             baselines = np.zeros(len(all_returns))
             for t in range(len(all_returns)):
                 "*** YOUR CODE HERE ***"
+                #b(s_t) = b_t: time-dependent baseline
+                baselines[t] = np.mean(all_returns[t]) 
+                
             return baselines
 
         if use_baseline:
@@ -307,6 +328,16 @@ def main(env_id, batch_size, discount, learning_rate, n_itrs, render, use_baseli
                 d = len(theta.flatten())
                 F = np.zeros((d, d))
                 "*** YOUR CODE HERE ***"
+                
+                #F = E[gradient(log) * gradient(log)^T]
+                #Theta is a flattened vector
+                for i in range(len(all_actions)):#calculation of all gradients for the matrix
+                    gradients = get_grad_logp_action(theta, all_observations[i], all_actions[i]).flatten()#flatten vector
+                
+                    #E[gradient * gradient^T]
+                    F = F + np.outer(gradients, gradients.T)
+                    
+                F = F / len(all_actions)#divide by the amount of gradients to get the average
                 return F
 
             def compute_natural_gradient(F, grad, reg=1e-4):
@@ -317,7 +348,13 @@ def main(env_id, batch_size, discount, learning_rate, n_itrs, render, use_baseli
                 :return: A matrix of size |A| * (|S|+1)
                 """
                 natural_grad = np.zeros_like(grad)
-                "*** YOUR CODE HERE ***"
+                "*** YOUR CODE HERE ***"  #From Natural Gradient: use F + reg x I (Einheitsmatrix)
+                Inverse_of_F = np.linalg.inv(F + reg * np.eye(*F.shape))#np.eye gives the "Einheitsmatrix"
+                
+                #natural gradient calculation: Computationassumes that theta is flattend
+                natural_grad = Inverse_of_F.dot(grad.flatten()).reshape(grad.shape)
+                
+                
                 return natural_grad
 
             def compute_step_size(F, natural_grad, natural_step_size):
@@ -329,6 +366,13 @@ def main(env_id, batch_size, discount, learning_rate, n_itrs, render, use_baseli
                 """
                 step_size = 0.
                 "*** YOUR CODE HERE ***"
+                
+                natural_gradient = natural_grad.flatten()#computation expects that it is flattened
+                
+                #alpha equals sqrt( 2*epsilon / ( natural_gradient.T * F * natural_gradient))  epsilon: natural_step_size
+                alpha = np.sqrt(2*natural_step_size/natural_gradient.T.dot(F).dot(natural_gradient))
+                step_size = alpha
+                
                 return step_size
 
             test_once(compute_fisher_matrix)
